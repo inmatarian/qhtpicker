@@ -6,6 +6,7 @@ from PyQt4 import QtCore, QtGui
 
 class QHTPicker(QtGui.QWidget):
     def __init__(self, config, parent=None):
+        info("Initializing QHTPicker Widget")
         QtGui.QWidget.__init__(self, parent)
         self.config = config
         self.setWindowTitle("QHTPicker")
@@ -14,6 +15,7 @@ class QHTPicker(QtGui.QWidget):
         self.filemodel.setRootPath("/")
         self.filelist = QtGui.QTreeView(self)
         self.filelist.setModel(self.filemodel)
+        debug("using rootdirectory: %s" % config.rootdirectory)
         self.filelist.setRootIndex(self.filemodel.index(config.rootdirectory));
 
         self.filelist.setHeaderHidden(True)
@@ -30,9 +32,20 @@ class QHTPicker(QtGui.QWidget):
         font = self.font()
         font.setPixelSize( desiredHeight )
         self.setFont(font)
+        (uw, uh, ux, uy) = ( int(self.config["window/xsize"]),
+                             int(self.config["window/ysize"]),
+                             int(self.config["window/xpos"]),
+                             int(self.config["window/ypos"]) )
+        self.setGeometry(ux, uy, uw, uh)
+        debug("Positioning at (%i,%i) %ix%i" % (ux, uy, uw, uh) )
         self.show()
-
+        
     def closeEvent(self, event):
+        g = self.geometry()
+        self.config["window/xsize"] = g.width()
+        self.config["window/ysize"] = g.height()
+        self.config["window/xpos"] = g.x()
+        self.config["window/ypos"] = g.y()
         event.accept()
         return
 
@@ -42,40 +55,46 @@ class Config(dict):
   
     def __init__(self, argv):
         self.initDefaultKeys()
-        settings = QtCore.QSettings(QtCore.QSettings.IniFormat,
-                                    QtCore.QSettings.UserScope,
-                                    "qhtpicker", "qhtpicker" )
-        debug( "QSetting Filename: %s" % settings.fileName() )
         self.loadAllKeys()
         if len(argv) > 1:
             self["rootdirectory"] = argv[1]
+            debug("arg rootdirectory: %s" % argv[1])
         return
 
     def __getattr__(self, key):
         return self[key]
-
     def __setattr__(self, key, value):
         self[key]=value
 
     def initDefaultKeys(self):
-        defaults = ( ( "rootdirectory", "/" ), ( "foo", "bar" ) )
+        info("Initializing default keys")
+        defaults = ( ( "rootdirectory", "~/" ),
+                     ( "window/xpos",  "0" ),
+                     ( "window/ypos",  "0" ),
+                     ( "window/xsize",  "250" ),
+                     ( "window/ysize",  "150" ) )
         for i in defaults:
-            debug(i)
             self[ i[0] ] = i[1]
+            debug("[%s]=%s"%(i[0], self[i[0]]))
         return
 
     def loadAllKeys(self):
         settings = QtCore.QSettings()
+        info("Loading keys from config file: %s" % settings.fileName())
         settings.sync()
         keys = settings.allKeys()
         for i in keys:
-            self[i] = settings.value(i)
+            s = str(i)
+            self[s] = settings.value(i).toString()
+            debug("[%s]=%s"%(s, self[s]))
         return
 
     def saveAllKeys(self):
         settings = QtCore.QSettings()
+        info("Saving keys to config file: %s" % settings.fileName())
         for i in self:
-            settings.setValue(i,self[i])
+            settings.setValue(i, self[i])
+            debug("[%s]=%s"%(i, self[i]))
         settings.sync()
         return
 
@@ -85,6 +104,9 @@ def main():
     logging.basicConfig( level=logging.DEBUG,
                          format="%(levelname)s: %(message)s" )
     app = QtGui.QApplication(sys.argv)
+    QtCore.QCoreApplication.setOrganizationName("qhtpicker");
+    QtCore.QCoreApplication.setApplicationName("qhtpicker");
+    QtCore.QSettings.setDefaultFormat(QtCore.QSettings.IniFormat)
     cwd = os.getcwd()
     config = Config(sys.argv)
     widget = QHTPicker(config)
