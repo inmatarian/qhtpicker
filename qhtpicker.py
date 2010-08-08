@@ -6,10 +6,11 @@ from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
 class QHTPicker(QWidget):
-    def __init__(self, config, parent=None):
+    def __init__(self, config, handler, parent=None):
         info("Initializing QHTPicker Widget")
         QWidget.__init__(self, parent)
         self.config = config
+        self.handler = handler
         self.setWindowTitle("QHTPicker")
 
         self.filemodel = QFileSystemModel(self)
@@ -23,6 +24,10 @@ class QHTPicker(QWidget):
         cols = self.filemodel.columnCount()
         for i in xrange(1, cols):
             self.filelist.hideColumn(i)
+
+        self.connect( self.filelist,
+                      SIGNAL("activated(const QModelIndex &)"),
+                      self.handleActivated )
 
         vbox = QVBoxLayout()
         vbox.addWidget(self.filelist)
@@ -49,6 +54,23 @@ class QHTPicker(QWidget):
         self.config["window/ypos"] = g.y()
         event.accept()
         return
+
+    @pyqtSlot("const QModelIndex &")
+    def handleActivated(self, index):
+        fileinfo = self.filemodel.fileInfo(index)
+        if fileinfo.isDir(): return
+        if not fileinfo.isReadable(): return
+        self.handler.handle(fileinfo.filePath())
+        return
+
+# --------------------------------------
+
+class Handler(object):
+    def __init__(self, config):
+        self.config = config
+
+    def handle(self, filename):
+        debug("Handling %s" % filename)
 
 # --------------------------------------
 
@@ -110,7 +132,8 @@ def main():
     QSettings.setDefaultFormat(QSettings.IniFormat)
     cwd = os.getcwd()
     config = Config(sys.argv)
-    widget = QHTPicker(config)
+    handler = Handler(config)
+    widget = QHTPicker(config, handler)
     ret = app.exec_()
     config.saveAllKeys()
     os.chdir(cwd)
