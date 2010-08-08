@@ -2,18 +2,19 @@
 
 import sys, os, logging
 from logging import debug, info, warning, error, critical
-from PyQt4 import QtCore, QtGui
+from PyQt4.QtCore import *
+from PyQt4.QtGui import *
 
-class QHTPicker(QtGui.QWidget):
+class QHTPicker(QWidget):
     def __init__(self, config, parent=None):
         info("Initializing QHTPicker Widget")
-        QtGui.QWidget.__init__(self, parent)
+        QWidget.__init__(self, parent)
         self.config = config
         self.setWindowTitle("QHTPicker")
 
-        self.filemodel = QtGui.QFileSystemModel(self)
+        self.filemodel = QFileSystemModel(self)
         self.filemodel.setRootPath("/")
-        self.filelist = QtGui.QTreeView(self)
+        self.filelist = QTreeView(self)
         self.filelist.setModel(self.filemodel)
         debug("using rootdirectory: %s" % config.rootdirectory)
         self.filelist.setRootIndex(self.filemodel.index(config.rootdirectory));
@@ -23,10 +24,10 @@ class QHTPicker(QtGui.QWidget):
         for i in xrange(1, cols):
             self.filelist.hideColumn(i)
 
-        vbox = QtGui.QVBoxLayout()
+        vbox = QVBoxLayout()
         vbox.addWidget(self.filelist)
         self.setLayout(vbox)
-        qdw = QtGui.QDesktopWidget()
+        qdw = QDesktopWidget()
         rect = qdw.screenGeometry()
         desiredHeight = rect.height() / 12
         font = self.font()
@@ -79,7 +80,7 @@ class Config(dict):
         return
 
     def loadAllKeys(self):
-        settings = QtCore.QSettings()
+        settings = QSettings()
         info("Loading keys from config file: %s" % settings.fileName())
         settings.sync()
         keys = settings.allKeys()
@@ -90,7 +91,7 @@ class Config(dict):
         return
 
     def saveAllKeys(self):
-        settings = QtCore.QSettings()
+        settings = QSettings()
         info("Saving keys to config file: %s" % settings.fileName())
         for i in self:
             settings.setValue(i, self[i])
@@ -103,10 +104,10 @@ class Config(dict):
 def main():
     logging.basicConfig( level=logging.DEBUG,
                          format="%(levelname)s: %(message)s" )
-    app = QtGui.QApplication(sys.argv)
-    QtCore.QCoreApplication.setOrganizationName("qhtpicker");
-    QtCore.QCoreApplication.setApplicationName("qhtpicker");
-    QtCore.QSettings.setDefaultFormat(QtCore.QSettings.IniFormat)
+    app = QApplication(sys.argv)
+    QCoreApplication.setOrganizationName("qhtpicker");
+    QCoreApplication.setApplicationName("qhtpicker");
+    QSettings.setDefaultFormat(QSettings.IniFormat)
     cwd = os.getcwd()
     config = Config(sys.argv)
     widget = QHTPicker(config)
