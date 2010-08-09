@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import sys, os, logging
+import sys, os, logging, PyQt4
 from logging import debug, info, warning, error, critical
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
@@ -32,12 +32,31 @@ class QHTPicker(QWidget):
         vbox = QVBoxLayout()
         vbox.addWidget(self.filelist)
         self.setLayout(vbox)
-        qdw = QDesktopWidget()
-        rect = qdw.screenGeometry()
-        desiredHeight = rect.height() / 12
-        font = self.font()
-        font.setPixelSize( desiredHeight )
+
+
+        self.fontAction = QAction("Change Font", self)
+        self.connect( self.fontAction, SIGNAL("triggered()"), self.handleFontAction )
+        self.addAction( self.fontAction )
+        quitsep = QAction(self)
+        quitsep.setSeparator(True)
+        self.addAction(quitsep)
+        self.quitAction = QAction("Quit", self)
+        self.quitAction.setMenuRole( QAction.QuitRole )
+        self.connect( self.quitAction, SIGNAL("triggered()"), self, SLOT("close()") )
+        self.addAction( self.quitAction )
+        self.setContextMenuPolicy( Qt.ActionsContextMenu )
+
+        if "font" in config and not config.font == None:
+            font = QFont()
+            font.fromString(config.font)
+        else:
+            qdw = QDesktopWidget()
+            rect = qdw.screenGeometry()
+            desiredHeight = rect.height() / 12
+            font = self.font()
+            font.setPixelSize( desiredHeight )
         self.setFont(font)
+        debug(font.toString())
         (uw, uh, ux, uy) = ( int(self.config["window/xsize"]),
                              int(self.config["window/ysize"]),
                              int(self.config["window/xpos"]),
@@ -52,6 +71,7 @@ class QHTPicker(QWidget):
         self.config["window/ysize"] = g.height()
         self.config["window/xpos"] = g.x()
         self.config["window/ypos"] = g.y()
+        self.config["font"] = self.font().toString()
         event.accept()
         return
 
@@ -62,6 +82,10 @@ class QHTPicker(QWidget):
         if not fileinfo.isReadable(): return
         self.handler.handle(fileinfo.filePath())
         return
+
+    def handleFontAction(self):
+        (font, ok) = QFontDialog.getFont( self.font(), self )
+        if ok: self.setFont(font)
 
 # --------------------------------------
 
