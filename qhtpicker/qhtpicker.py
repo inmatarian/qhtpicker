@@ -2,6 +2,7 @@
 
 import sys, os, logging, PyQt4
 from logging import debug, info, warning, error, critical
+from PyQt4 import uic
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
@@ -33,10 +34,9 @@ class QHTPicker(QWidget):
         vbox.addWidget(self.filelist)
         self.setLayout(vbox)
 
-
-        self.fontAction = QAction("Change Font", self)
-        self.connect( self.fontAction, SIGNAL("triggered()"), self.handleFontAction )
-        self.addAction( self.fontAction )
+        self.prefAction = QAction("Preferences", self)
+        self.connect( self.prefAction, SIGNAL("triggered()"), self.handlePrefAction )
+        self.addAction( self.prefAction )
         quitsep = QAction(self)
         quitsep.setSeparator(True)
         self.addAction(quitsep)
@@ -55,23 +55,47 @@ class QHTPicker(QWidget):
             desiredHeight = rect.height() / 12
             font = self.font()
             font.setPixelSize( desiredHeight )
-        self.setFont(font)
+        self.filelist.setFont(font)
         debug(font.toString())
-        (uw, uh, ux, uy) = ( int(self.config["window/xsize"]),
-                             int(self.config["window/ysize"]),
-                             int(self.config["window/xpos"]),
-                             int(self.config["window/ypos"]) )
+        if "frontColor" in config:
+            self.setColors( QColor(config["frontColor"]), None )
+        if "backColor" in config:
+            self.setColors( None, QColor(config["backColor"]) )
+        (uw, uh, ux, uy) = ( int(config["window/xsize"]),
+                             int(config["window/ysize"]),
+                             int(config["window/xpos"]),
+                             int(config["window/ypos"]) )
         self.setGeometry(ux, uy, uw, uh)
         debug("Positioning at (%i,%i) %ix%i" % (ux, uy, uw, uh) )
         self.show()
-        
-    def closeEvent(self, event):
+
+    def getColors(self):
+        pal = self.palette()
+        return ( pal.color(QPalette.Text), pal.color(QPalette.Base) )
+
+    def setColors(self, front, back):
+        pal = self.palette()
+        if not back is None:
+            pal.setColor( QPalette.Base, back )
+            pal.setColor( QPalette.AlternateBase, back )
+        if not front is None:
+            pal.setColor( QPalette.Text, front )
+        self.setPalette(pal)
+
+    def saveOptions(self):
         g = self.geometry()
         self.config["window/xsize"] = g.width()
         self.config["window/ysize"] = g.height()
         self.config["window/xpos"] = g.x()
         self.config["window/ypos"] = g.y()
-        self.config["font"] = self.font().toString()
+        self.config["font"] = self.filelist.font().toString()
+        (f, b) = self.getColors()
+        self.config["frontColor"] = f.name()
+        self.config["backColor"] = b.name()
+        self.config.saveAllKeys()
+
+    def closeEvent(self, event):
+        self.saveOptions()
         event.accept()
         return
 
@@ -83,9 +107,84 @@ class QHTPicker(QWidget):
         self.handler.handle(fileinfo.filePath())
         return
 
-    def handleFontAction(self):
-        (font, ok) = QFontDialog.getFont( self.font(), self )
-        if ok: self.setFont(font)
+    def handlePrefAction(self):
+        self.prefdiag = PreferencesDialog(self)
+        self.prefdiag.setOrigFontOption(self.filelist.font())
+        (f, b) = self.getColors()
+        self.prefdiag.setOrigFrontColorOption(f)
+        self.prefdiag.setOrigBackColorOption(b)
+        self.prefdiag.applyClicked.connect(self.handlePrefApplyAction)
+        ok = self.prefdiag.exec_()
+        if ok == QDialog.Accepted:
+            self.handlePrefApplyAction()
+            self.saveOptions()
+        else:
+            self.undoPrefApplyAction()
+        self.prefdiag = None
+
+    def handlePrefApplyAction(self):
+        self.filelist.setFont( self.prefdiag.fontOption )
+        self.setColors( self.prefdiag.frontColorOption, self.prefdiag.backColorOption )
+
+    def undoPrefApplyAction(self):
+        self.filelist.setFont( self.prefdiag.origFontOption )
+        self.setColors( self.prefdiag.origFrontColorOption, self.prefdiag.origBackColorOption )
+
+# --------------------------------------
+
+class PreferencesDialog(QDialog):
+    applyClicked = pyqtSignal()
+
+    def __init__(self, parent):
+        QDialog.__init__(self, parent)
+        uic.loadUi("prefs.ui", self)
+        self.connect( self.buttonBox.button(QDialogButtonBox.Apply),
+            SIGNAL("clicked()"), self.handleApplyPressed )
+
+    def setOrigFontOption(self, font):
+        self.origFontOption = font
+        self.setFontOption(font)
+
+    def setFontOption(self, font):
+        self.fontOption = font
+        self.fontButton.setText( font.toString() )
+
+    def setOrigFrontColorOption(self, color):
+        self.origFrontColorOption = color
+        self.setFrontColorOption(color)
+
+    def setFrontColorOption(self, color):
+        self.frontColorOption = color
+        self.frontButton.setText( color.name() )
+
+    def setOrigBackColorOption(self, color):
+        self.origBackColorOption = color
+        self.setBackColorOption(color)
+
+    def setBackColorOption(self, color):
+        self.backColorOption = color
+        self.backButton.setText( color.name() )
+
+    @pyqtSlot("")
+    def on_fontButton_clicked(self):
+        debug("on_fontButton_clicked")
+        (font, ok) = QFontDialog.getFont( self.fontOption, self )
+        if ok: self.setFontOption(font)
+
+    @pyqtSlot("")
+    def on_frontButton_clicked(self):
+        debug("on_frontColorButton_clicked")
+        color = QColorDialog.getColor( self.frontColorOption, self )
+        if color.isValid(): self.setFrontColorOption(color)
+
+    @pyqtSlot("")
+    def on_backButton_clicked(self):
+        debug("on_backColorButton_clicked")
+        color = QColorDialog.getColor( self.backColorOption, self )
+        if color.isValid(): self.setBackColorOption(color)
+
+    def handleApplyPressed(self):
+        self.applyClicked.emit()
 
 # --------------------------------------
 
@@ -159,7 +258,6 @@ def main():
     handler = Handler(config)
     widget = QHTPicker(config, handler)
     ret = app.exec_()
-    config.saveAllKeys()
     os.chdir(cwd)
     sys.exit(ret)
 
