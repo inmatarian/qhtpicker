@@ -1,5 +1,59 @@
-
 This is QHTPicker. It's a PyQt version of HTPicker by mackstann
-
 See his project, it's better: http://incise.org/htpicker.html
+
+1. What's it do?
+
+This is a basic tree-like file browser and launcher. The only thing
+worth noting about it is that you can set the font/colors, and
+customize your set of file handlers.
+
+
+2. Handlers
+
+They come in two parts, the glob and the launcher. When you select a
+file and double-click it (or press enter), it will attempt to match
+a handler by running through the list and matching one of the globs.
+
+Here are some globs.
+  *.nes
+  *.txt
+  *LOOKOUTBEHINDYOU.??.*
+
+Launchers are the command lines that will be constructed and launched
+with your selected filename.
+
+Here's a launcher:
+  fceu
+
+With that glob and launcher, you'd see this file:
+  Super Mario Bros 1 [U].nes
+launched like this:
+  fceu Super Mario Bros 1 [U].nes
+
+
+3. Security and Implementation Notes
+
+Don't put dumb launchers in. Python's subprocess.Popen is good, but not
+that good. rm and dd are REALLY BAD launchers, so don't do it.
+
+The config file is stored in your XDG_CONFIG_HOME directory, which is
+typically ~/.config/. You shouldn't have to manually edit it, since
+everything is covered in the preferences dialog.
+
+
+4. License
+
+Copyright (c) 2010, inmatarian <inmatarian@gmail.com>
+
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted, provided that the above
+copyright notice and this permission notice appear in all copies.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
