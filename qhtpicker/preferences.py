@@ -77,7 +77,7 @@ class PreferencesDialog(QDialog):
     def setListOfHandlers(self, handlers):
         self.handlersTable.setRowCount( len(handlers) )
         i = 0
-        while i < len(handlers)
+        while i < len(handlers):
             self.handlersTable.setItem( i, 0, QTableWidgetItem(handlers[i][0]) )
             self.handlersTable.setItem( i, 1, QTableWidgetItem(handlers[i][1]) )
             i += 1
