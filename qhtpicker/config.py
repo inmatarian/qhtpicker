@@ -40,16 +40,47 @@ class Config(dict):
         keys = settings.allKeys()
         for i in keys:
             s = str(i)
+            if s.find("handlers") >= 0: continue # skip handlers
             self[s] = settings.value(i).toString()
             debug("[%s]=%s"%(s, self[s]))
+        self.loadHandlers(settings)
+        return
+
+    def loadHandlers(self, settings):
+        h = []
+        n = settings.beginReadArray("handlers");
+        info("Loading %i handlers" % n)
+        for i in xrange(0, n):
+            settings.setArrayIndex(i);
+            glob = str(settings.value("glob").toString())
+            launcher = str(settings.value("launcher").toString())
+            h.append( [glob, launcher] )
+            debug("[handlers][%i] = glob:%s : launcher:%s" % (i, h[i][0], h[i][1]) )
+        self.handlers = h
+        settings.endArray()
         return
 
     def saveAllKeys(self):
         settings = QSettings()
         info("Saving keys to config file: %s" % settings.fileName())
         for i in self:
-            settings.setValue(i, self[i])
-            debug("[%s]=%s"%(i, self[i]))
+            s = str(self[i])
+            if i == "handlers": continue # skip handlers
+            settings.setValue(i, s)
+            debug("[%s]=%s"%(i, s))
+        self.saveHandlers(settings)
         settings.sync()
+        return
+
+    def saveHandlers(self, settings):
+        h = self.handlers
+        info("Saving %i handlers" % len(h))
+        settings.beginWriteArray("handlers", len(h))
+        for i in xrange(0, len(h)):
+            settings.setArrayIndex(i)
+            settings.setValue("glob", h[i][0])
+            settings.setValue("launcher", h[i][1])
+            debug("[handlers][%i] = glob:%s : launcher:%s" % (i, h[i][0], h[i][1]) )
+        settings.endArray()
         return
 

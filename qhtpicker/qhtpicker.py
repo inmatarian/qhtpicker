@@ -116,23 +116,18 @@ class QHTPicker(QWidget):
         (f, b) = self.getColors()
         self.prefdiag.setOrigFrontColorOption(f)
         self.prefdiag.setOrigBackColorOption(b)
+        self.prefdiag.setListOfHandlers(self.config.handlers)
         self.prefdiag.applyClicked.connect(self.handlePrefApplyAction)
         ok = self.prefdiag.exec_()
         if ok == QDialog.Accepted:
             self.handlePrefApplyAction()
-            self.saveOptions()
-        else:
-            self.undoPrefApplyAction()
         self.prefdiag = None
 
     def handlePrefApplyAction(self):
         self.filelist.setFont( self.prefdiag.fontOption )
         self.setColors( self.prefdiag.frontColorOption, self.prefdiag.backColorOption )
-
-    def undoPrefApplyAction(self):
-        self.filelist.setFont( self.prefdiag.origFontOption )
-        self.setColors( self.prefdiag.origFrontColorOption, self.prefdiag.origBackColorOption )
-
+        self.config.handlers = self.prefdiag.getListOfHandlers()
+        self.saveOptions()
 
 # --------------------------------------
 

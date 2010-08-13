@@ -75,23 +75,23 @@ class PreferencesDialog(QDialog):
         self.applyClicked.emit()
 
     def setListOfHandlers(self, handlers):
+        debug("adding handlers to table: %i" % len(handlers))
+        self.handlersTable.setSortingEnabled(False)
         self.handlersTable.setRowCount( len(handlers) )
-        i = 0
-        while i < len(handlers):
+        for i in xrange(0, len(handlers)):
+            debug("HANDLER: %s : %s" % (handlers[i][0], handlers[i][1]))
             self.handlersTable.setItem( i, 0, QTableWidgetItem(handlers[i][0]) )
             self.handlersTable.setItem( i, 1, QTableWidgetItem(handlers[i][1]) )
-            i += 1
         return
 
     def getListOfHandlers(self):
         handlers = []
-        i = 0
         n = self.handlersTable.rowCount()
-        while i < n:
-            x = self.handlersTable.item( i, 0 )
-            c = self.handlersTable.item( i, 1 )
-            if len(x.text())>1 and len(c.text())>1:
-                handlers += ( x.text(), c.text()  )
-            i += 1
-        return tuple(handlers)
+        for i in xrange(0, n):
+            glob = str(self.handlersTable.item( i, 0 ).text())
+            launcher = str(self.handlersTable.item( i, 1 ).text())
+            if len(glob)>1 and len(launcher)>1:
+                handlers.append ( [ glob, launcher ] )
+                debug("HANDLER: %s : %s" % (glob, launcher))
+        return handlers
 
