@@ -8,12 +8,12 @@ from PyQt4.QtGui import *
 
 class Config(dict):
   
-    def __init__(self, argv):
+    def __init__(self, rootdir):
         self.initDefaultKeys()
         self.loadAllKeys()
-        if len(argv) > 1:
-            self["rootdirectory"] = argv[1]
-            debug("arg rootdirectory: %s" % argv[1])
+        if (not rootdir is None) and os.path.isdir(rootdir):
+            self["rootdirectory"] = rootdir
+            debug("arg rootdirectory: %s" % rootdir)
         return
 
     def __getattr__(self, key):

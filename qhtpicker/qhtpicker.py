@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import sys, os, logging, PyQt4
+import sys, os, logging, PyQt4, getopt
 from logging import debug, info, warning, error, critical
 from PyQt4 import uic
 from PyQt4.QtCore import *
@@ -139,15 +139,32 @@ class QHTPicker(QWidget):
 
 # --------------------------------------
 
-def main():
-    logging.basicConfig( level=logging.DEBUG,
+def loadopts():
+    try:
+        opts, args = getopt.getopt(sys.argv[1:], "dv", ["debug","verbose"])
+    except:
+        return
+    loglev = logging.ERROR
+    for o, a in opts:
+        if o in ("-d","--debug"):
+            loglev = logging.DEBUG
+        elif o in ("-v","--verbose"):
+            loglev = logging.INFO
+    logging.basicConfig( level=loglev,
                          format="%(levelname)s: %(message)s" )
+    return "".join(args)
+
+# --------------------------------------
+
+def main():
+    startdir = loadopts()
+    info("Starting Qhtpicker Application")
     app = QApplication(sys.argv)
     QCoreApplication.setOrganizationName("qhtpicker");
     QCoreApplication.setApplicationName("qhtpicker");
     QSettings.setDefaultFormat(QSettings.IniFormat)
     cwd = os.getcwd()
-    config = Config(sys.argv)
+    config = Config(startdir)
     handler = Handler(config)
     widget = QHTPicker(config, handler)
     ret = app.exec_()
