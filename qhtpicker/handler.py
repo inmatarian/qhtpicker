@@ -23,6 +23,7 @@ class Handler(object):
             launcher = i[1]
             if fnmatch.fnmatch(filename, glob):
                 self.launch(filename, launcher)
+                return
         return
 
 # --------------------------------------
