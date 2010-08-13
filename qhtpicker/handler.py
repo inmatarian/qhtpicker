@@ -10,9 +10,10 @@ class Handler(object):
 
     def launch(self, filename, launcher):
         info("Launching %s" % filename)
-        cmdline = launcher.replace("$FILE", filename)
+        cmdline = launcher.split(" ")
+        cmdline.append(filename)
         debug("Command Line: %s" % cmdline)
-        subprocess.Popen(cmdline, shell=True)
+        subprocess.Popen(cmdline)
         return
 
     def handle(self, filename):
@@ -29,6 +30,6 @@ class Handler(object):
 if __name__ == "__main__":
     logging.basicConfig( level=logging.DEBUG,
                          format="%(levelname)s: %(message)s" )
-    h = Handler( "stevejobs" )
+    h = Handler( "stevejobssucks" )
     h.handle( sys.argv[1] )
 

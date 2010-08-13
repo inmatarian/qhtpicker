@@ -31,6 +31,8 @@ class Config(dict):
         for i in defaults:
             self[ i[0] ] = i[1]
             debug("[%s]=%s"%(i[0], self[i[0]]))
+        # default handlers
+        self.handlers = [ ["*.nes","fceu"] ]
         return
 
     def loadAllKeys(self):
@@ -49,6 +51,7 @@ class Config(dict):
     def loadHandlers(self, settings):
         h = []
         n = settings.beginReadArray("handlers");
+        if n == 0: return
         info("Loading %i handlers" % n)
         for i in xrange(0, n):
             settings.setArrayIndex(i);
@@ -74,6 +77,7 @@ class Config(dict):
 
     def saveHandlers(self, settings):
         h = self.handlers
+        if len(h) == 0: return
         info("Saving %i handlers" % len(h))
         settings.beginWriteArray("handlers", len(h))
         for i in xrange(0, len(h)):
