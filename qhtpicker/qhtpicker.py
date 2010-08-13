@@ -71,6 +71,7 @@ class QHTPicker(QWidget):
         self.setGeometry(ux, uy, uw, uh)
         debug("Positioning at (%i,%i) %ix%i" % (ux, uy, uw, uh) )
         self.show()
+        return
 
     def getColors(self):
         pal = self.palette()
@@ -84,6 +85,7 @@ class QHTPicker(QWidget):
         if not front is None:
             pal.setColor( QPalette.Text, front )
         self.setPalette(pal)
+        return
 
     def saveOptions(self):
         g = self.geometry()
@@ -96,6 +98,7 @@ class QHTPicker(QWidget):
         self.config["frontColor"] = f.name()
         self.config["backColor"] = b.name()
         self.config.saveAllKeys()
+        return
 
     def closeEvent(self, event):
         self.saveOptions()
@@ -116,18 +119,23 @@ class QHTPicker(QWidget):
         (f, b) = self.getColors()
         self.prefdiag.setOrigFrontColorOption(f)
         self.prefdiag.setOrigBackColorOption(b)
+        self.prefdiag.setOrigDirectoryOption(self.config.rootdirectory)
         self.prefdiag.setListOfHandlers(self.config.handlers)
         self.prefdiag.applyClicked.connect(self.handlePrefApplyAction)
         ok = self.prefdiag.exec_()
         if ok == QDialog.Accepted:
             self.handlePrefApplyAction()
         self.prefdiag = None
+        return
 
     def handlePrefApplyAction(self):
         self.filelist.setFont( self.prefdiag.fontOption )
         self.setColors( self.prefdiag.frontColorOption, self.prefdiag.backColorOption )
+        self.config.rootdirectory = self.prefdiag.directoryOption
+        self.filelist.setRootIndex(self.filemodel.index(self.config.rootdirectory));
         self.config.handlers = self.prefdiag.getListOfHandlers()
         self.saveOptions()
+        return
 
 # --------------------------------------
 

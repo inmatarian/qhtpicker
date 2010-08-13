@@ -40,6 +40,17 @@ class PreferencesDialog(QDialog):
         self.backColorOption = color
         self.backButton.setText( color.name() )
 
+    def setOrigDirectoryOption(self, directory):
+        self.origDirectoryOption = directory
+        self.setDirectoryOption(directory)
+
+    def setDirectoryOption(self, directory):
+        self.directoryOption = directory
+        self.directoryButton.setText( directory )
+
+    def getDirectoryOption(self):
+        return str(self.directoryEdit.text())
+
     @pyqtSlot("")
     def on_fontButton_clicked(self):
         debug("on_fontButton_clicked")
@@ -70,6 +81,13 @@ class PreferencesDialog(QDialog):
         if len(selected) < 1: return
         debug("removing row %i" % selected[0].row() )
         self.handlersTable.removeRow( selected[0].row() )
+
+    @pyqtSlot("")
+    def on_directoryButton_clicked(self):
+        d = QFileDialog.getExistingDirectory(self, 
+            "Open Directory", self.directoryOption,
+            QFileDialog.ShowDirsOnly | QFileDialog.DontResolveSymlinks )
+        if len(d) > 0: self.setDirectoryOption(d)
 
     def handleApplyPressed(self):
         self.applyClicked.emit()
